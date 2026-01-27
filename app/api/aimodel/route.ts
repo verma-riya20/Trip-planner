@@ -2,7 +2,6 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 import OpenAI from 'openai';
-import { aj } from "../arcjet/route";
 import { openai } from "@/lib/openai";
 
 const PROMPT=`You are an AI Trip Planner Agent. Your goal is to help the user plan a trip by asking one relevant trip-related question at a time.
