@@ -53,7 +53,7 @@ geo_coordinates: {
 };
 place_address: string;
 ticket_pricing: string;
-time_travel_each_loaction:string;
+time_travel_each_location?: string;
 best_time_to_visit:string;
 
 }
