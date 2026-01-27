@@ -44,7 +44,12 @@ function TripDetails() {
         }
 
         console.log('✅ Trip details fetched:', trip)
-        setTripData(trip.tripDetail)
+        // Type guard to ensure trip has tripDetail property
+        if ('tripDetail' in trip) {
+          setTripData(trip.tripDetail)
+        } else {
+          setError('Invalid trip data structure')
+        }
       } catch (err) {
         console.error('❌ Error fetching trip:', err)
         setError('Failed to load trip details')

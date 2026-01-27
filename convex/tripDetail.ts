@@ -4,7 +4,7 @@ import { mutation, query } from "./_generated/server";
 export const CreateTripDetail = mutation({
   args: {
     tripId: v.string(),
-    uid: v.string(),
+    uid: v.id("UserTable"),
     tripDetail: v.any(),
   },
   handler: async (ctx, args) => {
@@ -14,19 +14,6 @@ export const CreateTripDetail = mutation({
         uid: args.uid,
         tripDetailKeys: Object.keys(args.tripDetail || {}),
       });
-
-      // Validate uid exists in UserTable by querying
-      const userExists = await ctx.db
-        .query("UserTable")
-        .filter((q) => q.eq(q.field("_id"), args.uid))
-        .first();
-
-      if (!userExists) {
-        console.warn(`⚠️ User with ID ${args.uid} not found in UserTable`);
-        throw new Error(`User with ID ${args.uid} does not exist.`);
-      }
-
-      console.log("✅ User found:", userExists.name);
 
       // Insert trip details into TripDetailTable
       const result = await ctx.db.insert("TripDetailTable", {
@@ -61,7 +48,7 @@ export const CreateTripDetail = mutation({
 
 export const GetUserTrips = query({
   args: {
-    uid: v.string(),
+    uid: v.id("UserTable"),
   },
   handler: async (ctx, args) => {
     try {

@@ -82,11 +82,11 @@ function provider({
 
 export default provider
 
-export const useUserDetail = (): UserDetailContextType | null => {
+export const useUserDetail = (): UserDetailContextType => {
   const context = useContext(UserDetailContext);
   if (!context) {
     console.warn('⚠️ useUserDetail called outside of UserDetailContext provider');
-    return {UserDetail: null, setUserDetail: () => {}};
+    return {UserDetail: null, setUserDetail: () => {}} as UserDetailContextType;
   }
   return context;
 }
