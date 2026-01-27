@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
-    "start": "next start",
-    "postinstall": "npm install --legacy-peer-deps 2>/dev/null || true"
+    "start": "next start"
   },
   "dependencies": {
     "@arcjet/inspect": "^1.0.0-beta.13",
