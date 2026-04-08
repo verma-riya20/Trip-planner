@@ -18,18 +18,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-     <ClerkProvider>
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
        className={outfit.className}
       >
-        <ConvexClientProvider>
-          <Provider>
-            {children}
-          </Provider>
-        </ConvexClientProvider>
+        <ClerkProvider>
+          <ConvexClientProvider>
+            <Provider>
+              {children}
+            </Provider>
+          </ConvexClientProvider>
+        </ClerkProvider>
       </body>
     </html>
-    </ClerkProvider>
   );
 }

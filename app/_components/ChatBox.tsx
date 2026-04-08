@@ -100,7 +100,7 @@ function ChatBox() {
         setmessages((prev:Message[]) => [...prev, {
           role:'assistant',
           content: result?.data?.resp,
-          ui: result?.data?.ui || "groupSize"
+          ui: result?.data?.ui || ""
         }])
       }
 
@@ -195,12 +195,30 @@ function ChatBox() {
         console.log("🟡 pendingSave set to true");
       }
     } catch (error) {
-      console.error('Error in onSend:', error);
+      console.warn('Error in onSend');
+      let errorMessage = 'An error occurred while processing your request. Please try again.';
+
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status;
+        const apiMessage = error.response?.data?.message;
+        const apiHint = error.response?.data?.hint;
+
+        if (statusCode === 429) {
+          errorMessage = 'The AI service is rate-limited right now. Please wait a few seconds and try again.';
+        } else if (statusCode === 502 && typeof apiMessage === 'string' && apiMessage.trim()) {
+          errorMessage = typeof apiHint === 'string' && apiHint.trim()
+            ? `${apiMessage} ${apiHint}`
+            : apiMessage;
+        } else if (typeof apiMessage === 'string' && apiMessage.trim()) {
+          errorMessage = apiMessage;
+        }
+      }
+
       setmessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: 'An error occurred while processing your request. Please try again.'
+          content: errorMessage
         }
       ]);
     } finally {
