@@ -4,6 +4,37 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from 'openai';
 import { openai } from "@/lib/openai";
 
+const AI_MODEL = process.env.OPENROUTER_MODEL ?? "openai/gpt-oss-20b:free";
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function createCompletionWithRetry(
+   payload: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming
+): Promise<OpenAI.Chat.Completions.ChatCompletion> {
+   const maxRetries = 1;
+
+   for (let attempt = 0; ; attempt++) {
+      try {
+         return await openai.chat.completions.create(payload);
+      } catch (error) {
+         const status = error instanceof OpenAI.APIError ? error.status : undefined;
+         const isRetryable = status === 429 || (typeof status === "number" && status >= 500);
+
+         if (!isRetryable || attempt >= maxRetries) {
+            throw error;
+         }
+
+         const retryAfterHeader =
+            error instanceof OpenAI.APIError ? error.headers?.get("retry-after") : null;
+         const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : NaN;
+         const delayMs = Number.isFinite(retryAfterSeconds)
+            ? Math.max(retryAfterSeconds, 1) * 1000
+            : 700;
+
+         await sleep(delayMs);
+      }
+   }
+}
+
 function extractTextFromMessage(message: OpenAI.Chat.Completions.ChatCompletionMessage): string {
    const contentText = typeof message.content === "string"
       ? message.content
@@ -110,10 +141,12 @@ RETURN ONLY THE JSON OBJECT ABOVE - NO OTHER TEXT.`
 
 
 export async function POST(req: NextRequest) { 
-   const { messages, isFinal } = await req.json();
    try {
-      const completion = await openai.chat.completions.create({
-         model: "openai/gpt-oss-20b:free",
+      const { messages, isFinal } = await req.json();
+
+      const completion = await createCompletionWithRetry({
+         model: AI_MODEL,
+         stream: false,
          messages: [
             {
                role: "system",
@@ -202,10 +235,29 @@ export async function POST(req: NextRequest) {
          return NextResponse.json({
             error: "AI_PARSE_ERROR",
             raw_content: content,
-         });
+         }, { status: 502 });
       }
    } catch (error) {
       console.error('❌ OpenAI API Error:', error);
-      return NextResponse.json({ error: "Failed to fetch AI response" });
+
+      if (error instanceof OpenAI.APIError && error.status === 429) {
+         const retryAfterHeader = error.headers?.get("retry-after");
+         const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : null;
+
+         return NextResponse.json(
+            {
+               error: "RATE_LIMITED",
+               message: "The AI provider is busy right now. Please retry in a few seconds.",
+               retryAfterSeconds: Number.isFinite(retryAfterSeconds) ? retryAfterSeconds : null,
+               hint: "Set OPENROUTER_MODEL in Vercel to a paid or more stable model.",
+            },
+            { status: 429 }
+         );
+      }
+
+      return NextResponse.json(
+         { error: "AI_PROVIDER_ERROR", message: "Failed to fetch AI response" },
+         { status: 502 }
+      );
    }
 }
