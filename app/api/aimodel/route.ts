@@ -240,16 +240,19 @@ export async function POST(req: NextRequest) {
    } catch (error) {
       console.error('❌ OpenAI API Error:', error);
 
-      if (error instanceof OpenAI.APIError && error.status === 429) {
+      if (error instanceof OpenAI.APIError && (error.status === 429 || error.status === 402)) {
          const retryAfterHeader = error.headers?.get("retry-after");
          const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : null;
+         const isQuotaStyleLimit = error.status === 402;
 
          return NextResponse.json(
             {
                error: "RATE_LIMITED",
-               message: "The AI provider is busy right now. Please retry in a few seconds.",
+               message: isQuotaStyleLimit
+                  ? "Rate limit exceeded for free usage. Please try again later."
+                  : "The AI provider is busy right now. Please retry in a few seconds.",
                retryAfterSeconds: Number.isFinite(retryAfterSeconds) ? retryAfterSeconds : null,
-               hint: "Free models are often rate-limited. Keep the free model and retry after a short delay.",
+               hint: "Using free model only. If this persists, wait for quota reset and retry.",
             },
             { status: 429 }
          );
