@@ -8,8 +8,8 @@ function extractTextFromMessage(message: OpenAI.Chat.Completions.ChatCompletionM
    const contentText = typeof message.content === "string"
       ? message.content
       : Array.isArray(message.content)
-         ? message.content
-            .map((part) => (typeof part === "object" && "text" in part ? String(part.text ?? "") : ""))
+         ? (message.content as Array<{ text?: string }>)
+            .map((part: { text?: string }) => String(part.text ?? ""))
             .join(" ")
          : "";
 
@@ -126,6 +126,13 @@ export async function POST(req: NextRequest) {
       console.log('💬 AI Model Response:', completion.choices[0].message);
       const message = completion.choices[0].message;
       const content = extractTextFromMessage(message);
+
+      if (!isFinal && !content) {
+         return NextResponse.json({
+            resp: "Great, let's plan your trip. Where are you starting from?",
+            ui: "",
+         });
+      }
 
       // Try to parse JSON safely
       try {
