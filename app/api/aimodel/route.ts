@@ -249,7 +249,7 @@ export async function POST(req: NextRequest) {
                error: "RATE_LIMITED",
                message: "The AI provider is busy right now. Please retry in a few seconds.",
                retryAfterSeconds: Number.isFinite(retryAfterSeconds) ? retryAfterSeconds : null,
-               hint: "Set OPENROUTER_MODEL in Vercel to a paid or more stable model.",
+               hint: "Free models are often rate-limited. Keep the free model and retry after a short delay.",
             },
             { status: 429 }
          );
