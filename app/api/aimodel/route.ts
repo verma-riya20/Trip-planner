@@ -59,13 +59,9 @@ function extractTextFromMessage(message: OpenAI.Chat.Completions.ChatCompletionM
 const PROMPT=`You are an AI Trip Planner Agent. Your goal is to help the user plan a trip by asking one relevant trip-related question at a time.
 Only ask questions about the following details in order, and wait for the user's answer before asking the next:
 
-Starting location (source)
-
-Destination city or country
-
 Group Size (Solo, Couple, Family, Friends)
 
-Budget (Low, Medium, High)
+Budget/Expenses (Low, Medium, High)
 
 Trip duration (number of days)
 
@@ -75,13 +71,13 @@ Do not ask multiple questions at once, and never ask irrelevant questions.
 If any answer is missing or unclear, politely ask the user to clarify before proceeding.
 Always maintain a conversational, interactive style while asking questions.
 
-Along with responses also send which UI component to display for generative UI (for example budget/groupSize/tripDuration/final), where Final means AI generating complete final output.
+Along with responses also send which UI component to display for generative UI (for example groupSize/budget/tripDuration/final), where Final means AI generating complete final output.
 
 Once all required information is collected, generate and return a strict JSON response only (no explanations or extra text) with the following JSON schema:
 
 {
   "resp": <Text Response>,
-  "ui": "budget/groupSize/tripDuration/final"
+  "ui": "groupSize/budget/tripDuration/final"
 }
 
 
@@ -217,16 +213,19 @@ export async function POST(req: NextRequest) {
          // For chat steps (non-final), gracefully map plain text into expected schema.
          if (!isFinal) {
             const lower = content.toLowerCase();
-            const inferredUi = lower.includes("budget")
-               ? "budget"
-               : lower.includes("group")
-                  ? "groupSize"
-                  : (lower.includes("duration") || lower.includes("days"))
-                     ? "tripDuration"
-                     : "";
+            let inferredUi = "";
+            
+            // Infer which UI component based on content
+            if (lower.includes("group") || lower.includes("solo") || lower.includes("couple") || lower.includes("family") || lower.includes("friend")) {
+               inferredUi = "groupSize";
+            } else if (lower.includes("budget") || lower.includes("expense") || lower.includes("cost") || lower.includes("price")) {
+               inferredUi = "budget";
+            } else if (lower.includes("duration") || lower.includes("days") || lower.includes("week") || lower.includes("nights")) {
+               inferredUi = "tripDuration";
+            }
 
             return NextResponse.json({
-               resp: content || "Please share your destination city or country.",
+               resp: content || "Please share your trip details.",
                ui: inferredUi,
             });
          }
