@@ -59,6 +59,10 @@ function extractTextFromMessage(message: OpenAI.Chat.Completions.ChatCompletionM
 const PROMPT=`You are an AI Trip Planner Agent. Your goal is to help the user plan a trip by asking one relevant trip-related question at a time.
 Only ask questions about the following details in order, and wait for the user's answer before asking the next:
 
+Starting location (source)
+
+Destination city or country
+
 Group Size (Solo, Couple, Family, Friends)
 
 Budget/Expenses (Low, Medium, High)
@@ -215,7 +219,7 @@ export async function POST(req: NextRequest) {
             const lower = content.toLowerCase();
             let inferredUi = "";
             
-            // Infer which UI component based on content
+            // Infer which UI component based on content (source/destination are text input, not special UI)
             if (lower.includes("group") || lower.includes("solo") || lower.includes("couple") || lower.includes("family") || lower.includes("friend")) {
                inferredUi = "groupSize";
             } else if (lower.includes("budget") || lower.includes("expense") || lower.includes("cost") || lower.includes("price")) {
@@ -223,6 +227,8 @@ export async function POST(req: NextRequest) {
             } else if (lower.includes("duration") || lower.includes("days") || lower.includes("week") || lower.includes("nights")) {
                inferredUi = "tripDuration";
             }
+            // If asking about source/destination, leave inferredUi empty (text input only)
+
 
             return NextResponse.json({
                resp: content || "Please share your trip details.",
