@@ -228,15 +228,14 @@ export async function POST(req: NextRequest) {
             let inferredUi = "";
             
             // Infer which UI component based on content (source/destination are text input, not special UI)
-            if (lower.includes("group") || lower.includes("solo") || lower.includes("couple") || lower.includes("family") || lower.includes("friend")) {
+            if (lower.includes("group") || lower.includes("solo") || lower.includes("couple") || lower.includes("family") || lower.includes("friend") || lower.includes("how many")) {
                inferredUi = "groupSize";
-            } else if (lower.includes("budget") || lower.includes("expense") || lower.includes("cost") || lower.includes("price")) {
+            } else if (lower.includes("budget") || lower.includes("expense") || lower.includes("cost") || lower.includes("price") || lower.includes("afford") || lower.includes("spending") || lower.includes("money")) {
                inferredUi = "budget";
-            } else if (lower.includes("duration") || lower.includes("days") || lower.includes("week") || lower.includes("nights")) {
+            } else if (lower.includes("duration") || lower.includes("days") || lower.includes("week") || lower.includes("nights") || lower.includes("how long") || lower.includes("length")) {
                inferredUi = "tripDuration";
             }
             // If asking about source/destination, leave inferredUi empty (text input only)
-
 
             return NextResponse.json({
                resp: content || "Please share your trip details.",
