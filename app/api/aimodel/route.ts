@@ -72,8 +72,9 @@ Trip duration (number of days)
 IMPORTANT: Track what information has already been collected from the conversation history. Ask ONLY for the next missing item. Do NOT skip any steps. ONLY respond with ui:"final" after ALL 5 details are collected.
 
 UI RESPONSE MAPPING (return these exact values):
-- When asking about Budget → ui:"budget"
+- When asking about Source or Destination → ui:""
 - When asking about Group Size → ui:"groupSize"
+- When asking about Budget → ui:"budget"
 - When asking about Trip Duration → ui:"tripDuration"
 - ONLY when all 5 items collected → ui:"final"
 
