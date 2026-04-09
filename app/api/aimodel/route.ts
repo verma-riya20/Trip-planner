@@ -69,6 +69,8 @@ Budget/Expenses (Low, Medium, High)
 
 Trip duration (number of days)
 
+IMPORTANT: Track what information has already been collected from the conversation history. Ask ONLY for the next missing item. Do NOT skip any steps. ONLY respond with ui:"final" after ALL 5 details are collected.
+
 After getting trip duration, immediately respond with ui:"final" so user can generate the trip.
 
 Do not ask multiple questions at once, and never ask irrelevant questions.
