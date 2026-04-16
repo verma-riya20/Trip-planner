@@ -121,17 +121,19 @@ function HotelCardItem({hotel}:Props) {
 
   return (
     <div  className='flex flex-col gap-1 w-full max-w-full overflow-hidden'>
-                 <img 
-                   src={imageSrc ?? 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop&crop=center'} 
-                   alt={hotel?.hotel_name || 'hotel-image'} 
-                   width={400} 
-                   height={200} 
-                   className='rounded-xl shadow object-cover mb-2'
-                   onError={(e) => {
-                     const target = e.target as HTMLImageElement;
-                     target.src = 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop&crop=center';
-                   }}
-                 />
+                 <div className='relative w-full aspect-4/3 overflow-hidden rounded-xl shadow mb-2 bg-gray-100'>
+                   <img 
+                     src={imageSrc ?? 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop&crop=center'} 
+                     alt={hotel?.hotel_name || 'hotel-image'} 
+                     width={400} 
+                     height={300} 
+                     className='w-full h-full object-cover'
+                     onError={(e) => {
+                       const target = e.target as HTMLImageElement;
+                       target.src = 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop&crop=center';
+                     }}
+                   />
+                 </div>
                  {coords && (
                    <div className='mb-2'>
                      <MapView lat={coords.lat} lng={coords.lng} zoom={15} height={'140px'} markerLabel={hotel?.hotel_name} />

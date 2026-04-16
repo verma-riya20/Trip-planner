@@ -62,9 +62,9 @@ function PlaceCardItem({activity}:Props) {
   
   return (
      <div>
-           <div className="relative">
+           <div className="relative w-full aspect-4/3 overflow-hidden rounded-xl shadow mb-2 bg-gray-100">
              {loading && (
-               <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-xl z-10">
+               <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
                  <Loader className="animate-spin h-6 w-6 text-gray-400" />
                </div>
              )}
@@ -72,8 +72,8 @@ function PlaceCardItem({activity}:Props) {
                src={imageSrc}
                alt={activity?.place_name || 'place-image'}
                width={400}
-               height={200}
-               className="rounded-xl shadow object-cover mb-2 w-full max-w-full h-auto"
+               height={300}
+               className="w-full h-full object-cover"
                onError={(e) => {
                  const target = e.target as HTMLImageElement;
                  if (target.src !== fallbackImage) {

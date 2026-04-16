@@ -56,6 +56,47 @@ function extractTextFromMessage(message: OpenAI.Chat.Completions.ChatCompletionM
    return (contentText || reasoningText || "").trim();
 }
 
+const UI_PROMPTS = {
+   groupSize: "Who are you traveling with?",
+   budget: "What budget do you prefer for this trip?",
+   tripDuration: "How many days would you like your trip to be?",
+} as const;
+
+type UiType = "" | "groupSize" | "budget" | "tripDuration" | "final";
+
+function normalizeUi(ui: unknown): UiType {
+   if (ui === "groupSize" || ui === "budget" || ui === "tripDuration" || ui === "final") {
+      return ui;
+   }
+   return "";
+}
+
+function looksLikeInternalReasoning(text: string): boolean {
+   const lower = text.toLowerCase();
+   return (
+      lower.includes("user gave") ||
+      lower.includes("we have") ||
+      lower.includes("need budget") ||
+      lower.includes("ask budget") ||
+      lower.includes("=>") ||
+      lower.includes("step")
+   );
+}
+
+function buildSafeResponse(ui: UiType, fallbackText: string): string {
+   if (ui === "groupSize" || ui === "budget" || ui === "tripDuration") {
+      return UI_PROMPTS[ui];
+   }
+
+   const cleaned = fallbackText.replace(/\s+/g, " ").trim();
+
+   if (!cleaned || looksLikeInternalReasoning(cleaned)) {
+      return "Great, let's plan your trip. Where are you starting from?";
+   }
+
+   return cleaned;
+}
+
 const PROMPT=`You are an AI Trip Planner Agent. Your goal is to help the user plan a trip by asking one relevant trip-related question at a time.
 Only ask questions about the following details in order, and wait for the user's answer before asking the next:
 
@@ -156,6 +197,7 @@ export async function POST(req: NextRequest) {
       const completion = await createCompletionWithRetry({
          model: AI_MODEL,
          stream: false,
+         ...(isFinal ? { response_format: { type: "json_object" as const } } : {}),
          messages: [
             {
                role: "system",
@@ -179,6 +221,16 @@ export async function POST(req: NextRequest) {
       // Try to parse JSON safely
       try {
          const parsed = JSON.parse(content);
+         if (!isFinal) {
+            const parsedResp = typeof parsed?.resp === "string" ? parsed.resp : content;
+            const ui = normalizeUi(parsed?.ui);
+
+            return NextResponse.json({
+               resp: buildSafeResponse(ui, parsedResp),
+               ui,
+            });
+         }
+
          return NextResponse.json(parsed);
       } catch (parseError) {
          console.error('❌ JSON Parse Error:', parseError);
@@ -229,18 +281,20 @@ export async function POST(req: NextRequest) {
             let inferredUi = "";
             
             // Infer which UI component based on content (source/destination are text input, not special UI)
-            if (lower.includes("group") || lower.includes("solo") || lower.includes("couple") || lower.includes("family") || lower.includes("friend") || lower.includes("how many")) {
-               inferredUi = "groupSize";
-            } else if (lower.includes("budget") || lower.includes("expense") || lower.includes("cost") || lower.includes("price") || lower.includes("afford") || lower.includes("spending") || lower.includes("money")) {
+            if (lower.includes("budget") || lower.includes("expense") || lower.includes("cost") || lower.includes("price") || lower.includes("afford") || lower.includes("spending") || lower.includes("money")) {
                inferredUi = "budget";
             } else if (lower.includes("duration") || lower.includes("days") || lower.includes("week") || lower.includes("nights") || lower.includes("how long") || lower.includes("length")) {
                inferredUi = "tripDuration";
+            } else if (lower.includes("group") || lower.includes("solo") || lower.includes("couple") || lower.includes("family") || lower.includes("friend") || lower.includes("how many")) {
+               inferredUi = "groupSize";
             }
             // If asking about source/destination, leave inferredUi empty (text input only)
 
+            const ui = normalizeUi(inferredUi);
+
             return NextResponse.json({
-               resp: content || "Please share your trip details.",
-               ui: inferredUi,
+               resp: buildSafeResponse(ui, content || "Please share your trip details."),
+               ui,
             });
          }
 

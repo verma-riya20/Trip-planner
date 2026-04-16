@@ -77,20 +77,25 @@ function ChatBox() {
   const {UserDetail} = useUserDetail()
   const isFinalRef = useRef(false)
 
-  const onSend = useCallback(async() => {
-    if(!userInput?.trim()) return;
+  const onSend = useCallback(async (inputValue?: string) => {
+    const currentInput = (inputValue ?? userInput ?? '').trim();
+
+    if(!currentInput) return;
+
     setloading(true)
     setuserInput('');
     const newMsg: Message = {
       role:'user',
-      content:userInput ?? ''
+      content:currentInput
     }
 
     setmessages((prev:Message[]) => [...prev, newMsg])
 
     try {
+      const userMessages = [...messages, newMsg].filter((msg) => msg.role === 'user');
+
       const result = await axios.post("/api/aimodel", {
-        messages: [...messages, newMsg],
+        messages: userMessages,
         isFinal: isFinalRef.current
       });
 
@@ -228,11 +233,11 @@ function ChatBox() {
 
   const RenderGenerativeUi = (ui: string) => {
     if(ui=='budget'){
-      return <BudgetUi onSelectedOption={(v:string)=>{setuserInput(v); onSend()}}></BudgetUi>
+      return <BudgetUi onSelectedOption={(v:string)=>{setuserInput(v)}}></BudgetUi>
     }else if(ui=='groupSize'){
-      return <GroupSizeUi onSelectedOption={(v:string)=>{setuserInput(v); onSend()}}/>
+      return <GroupSizeUi onSelectedOption={(v:string)=>{setuserInput(v)}}/>
     }else if(ui=='tripDuration'){
-      return <TripDurationUi onSelectedOption={(v: string) => { setuserInput(v); onSend(); }} />
+      return <TripDurationUi onSelectedOption={(v: string) => { setuserInput(v); }} />
     }else if(ui=='final'){
       return (
         <FinalUi
@@ -327,7 +332,7 @@ function ChatBox() {
   return (
     <div className='min-h-[87vh] flex flex-col border shadow rounded-2xl p-2'>
       {messages?.length==0 &&
-      <EmptyBoxState onSelectionOption={(v:string)=>{setuserInput(v); onSend()}}></EmptyBoxState> 
+      <EmptyBoxState onSelectionOption={(v:string)=>{setuserInput(v)}}></EmptyBoxState> 
       }
       <section className='flex-1 overflow-y-auto p-4'>
         {messages.map((msg:Message,index)=>(
@@ -339,7 +344,7 @@ function ChatBox() {
           </div>:
           <div className='flex justify-start mt-2'  key={index}>
             <div className='max-w-lg bg-gray-100 text-black px-4 py-2 rounded-xl'>
-              {msg.ui !== 'final' && msg.content}
+              <div className="whitespace-pre-wrap">{msg.ui !== 'final' && msg.content}</div>
               {RenderGenerativeUi(msg.ui?? '')}
             </div>
           </div>
